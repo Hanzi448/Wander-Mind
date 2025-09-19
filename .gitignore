@@ -30,6 +30,7 @@ staticfiles/
 # Env vars
 .env
 *.env
+.env.example
 
 
 # Node / Next.js frontend
