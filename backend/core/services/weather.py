@@ -1,4 +1,3 @@
-# core/services/weather.py
 import requests
 from datetime import datetime, timezone, date
 from typing import Optional, Dict, Any, List
