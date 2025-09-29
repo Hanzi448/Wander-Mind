@@ -1,12 +1,12 @@
 import axios, { AxiosResponse } from 'axios';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import { 
-  User, 
-  LoginRequest, 
-  RegisterRequest, 
-  AuthResponse, 
-  Profile 
+import {
+  User,
+  LoginRequest,
+  RegisterRequest,
+  AuthResponse,
+  Profile
 } from '@/utils/types';
 import { API_BASE_URL, API_ENDPOINTS, STORAGE_KEYS } from '@/utils/constants';
 
@@ -26,7 +26,7 @@ interface AuthStore {
   refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  
+
   // Actions
   login: (credentials: LoginRequest) => Promise<void>;
   register: (userData: RegisterRequest) => Promise<void>;
@@ -52,14 +52,14 @@ export const useAuthStore = create<AuthStore>()(
       login: async (credentials: LoginRequest) => {
         try {
           set({ isLoading: true });
-          
+
           const response: AxiosResponse<AuthResponse> = await api.post(
             API_ENDPOINTS.LOGIN,
             credentials
           );
 
           const { access, refresh, user } = response.data;
-          
+
           set({
             user,
             accessToken: access,
@@ -70,15 +70,15 @@ export const useAuthStore = create<AuthStore>()(
 
           // Set default Authorization header
           api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
-          
+
           // Fetch user profile
           await get().fetchProfile();
-          
+
         } catch (error: any) {
           set({ isLoading: false });
           throw new Error(
-            error.response?.data?.message || 
-            error.response?.data?.detail || 
+            error.response?.data?.message ||
+            error.response?.data?.detail ||
             'Login failed'
           );
         }
@@ -87,19 +87,30 @@ export const useAuthStore = create<AuthStore>()(
       register: async (userData: RegisterRequest) => {
         try {
           set({ isLoading: true });
-          
+
           await api.post(API_ENDPOINTS.REGISTER, userData);
-          
+
           // Auto-login after registration
           await get().login({
             email: userData.email,
             password: userData.password,
           });
-          
         } catch (error: any) {
           set({ isLoading: false });
+
+          // Extract DRF validation errors
+          const data = error.response?.data;
+          if (data && typeof data === 'object') {
+            // Combine all field messages into one string
+            const messages = Object.entries(data)
+              .map(([field, errs]) => `${field}: ${(errs as string[]).join(' ')}`)
+              .join('\n');
+            throw new Error(messages);
+          }
+
+          // Fallback
           throw new Error(
-            error.response?.data?.message || 
+            error.response?.data?.message ||
             error.response?.data?.detail ||
             'Registration failed'
           );
@@ -113,14 +124,14 @@ export const useAuthStore = create<AuthStore>()(
             // Ignore errors on logout
           });
         }
-        
+
         get().clearAuth();
       },
 
       refreshAccessToken: async (): Promise<boolean> => {
         try {
           const { refreshToken } = get();
-          
+
           if (!refreshToken) {
             get().clearAuth();
             return false;
@@ -131,10 +142,10 @@ export const useAuthStore = create<AuthStore>()(
           });
 
           const { access } = response.data;
-          
+
           set({ accessToken: access });
           api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
-          
+
           return true;
         } catch (error) {
           get().clearAuth();
@@ -179,9 +190,9 @@ export const useAuthStore = create<AuthStore>()(
           isAuthenticated: false,
           isLoading: false,
         });
-        
+
         delete api.defaults.headers.common['Authorization'];
-        
+
         // Clear localStorage
         if (typeof window !== 'undefined') {
           localStorage.removeItem(STORAGE_KEYS.ACCESS_TOKEN);
@@ -225,7 +236,7 @@ api.interceptors.response.use(
       originalRequest._retry = true;
 
       const refreshed = await useAuthStore.getState().refreshAccessToken();
-      
+
       if (refreshed) {
         const newToken = useAuthStore.getState().accessToken;
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
@@ -261,10 +272,10 @@ export const authHelpers = {
 
   initializeAuth: () => {
     const { accessToken, refreshToken, isAuthenticated } = useAuthStore.getState();
-    
+
     if (isAuthenticated && accessToken) {
       api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
-      
+
       // Check if token is expired and refresh if needed
       if (authHelpers.isTokenExpired(accessToken) && refreshToken) {
         useAuthStore.getState().refreshAccessToken();

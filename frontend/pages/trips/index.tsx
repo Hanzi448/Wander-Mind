@@ -38,6 +38,7 @@ const TripsPage: React.FC = () => {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
   const [filteredTrips, setFilteredTrips] = useState<Trip[]>([]);
+  const [popularDestinations, setPopularDestinations] = useState<any[]>([]);
 
   const router = useRouter();
   const { trips, loading, createTrip, updateTrip, deleteTrip } = useTrips();
@@ -48,14 +49,14 @@ const TripsPage: React.FC = () => {
   }, [trips, searchQuery, activeFilter, sortBy, sortOrder]);
 
   const applyFilters = () => {
-    let filtered = [...trips];
+    let filtered = [...(trips || [])];
 
     // Search filter
     if (searchQuery) {
       const searchLower = searchQuery.toLowerCase();
       filtered = filtered.filter(trip =>
         trip.name.toLowerCase().includes(searchLower) ||
-        trip.destinations.some(dest => 
+        (trip.destinations || []).some(dest => 
           dest.name.toLowerCase().includes(searchLower) ||
           dest.country.toLowerCase().includes(searchLower)
         )
@@ -122,15 +123,16 @@ const TripsPage: React.FC = () => {
 
   const getTripCounts = () => {
     const today = new Date();
+    const safeTrips = trips || [];
     return {
-      all: trips.length,
-      upcoming: trips.filter(t => isFuture(parseISO(t.start_date))).length,
-      current: trips.filter(t => {
+      all: safeTrips.length,
+      upcoming: safeTrips.filter(t => isFuture(parseISO(t.start_date))).length,
+      current: safeTrips.filter(t => {
         const start = parseISO(t.start_date);
         const end = parseISO(t.end_date);
         return start <= today && end >= today;
       }).length,
-      past: trips.filter(t => isPast(parseISO(t.end_date))).length,
+      past: safeTrips.filter(t => isPast(parseISO(t.end_date))).length,
     };
   };
 
@@ -167,7 +169,7 @@ const TripsPage: React.FC = () => {
                   {loading ? (
                     <LoadingSpinner size="sm" />
                   ) : (
-                    `${trips.length} trip${trips.length !== 1 ? 's' : ''} planned`
+                    `${(trips || []).length} trip${(trips || []).length !== 1 ? 's' : ''} planned`
                   )}
                 </p>
               </div>
@@ -186,7 +188,7 @@ const TripsPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-blue-100 text-sm">Total Trips</p>
-                      <p className="text-2xl font-bold">{stats.totalTrips}</p>
+                      <p className="text-2xl font-bold">{stats.totalTrips || 0}</p>
                     </div>
                     <Plane className="h-8 w-8 text-blue-200" />
                   </div>
@@ -196,7 +198,7 @@ const TripsPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-green-100 text-sm">Upcoming</p>
-                      <p className="text-2xl font-bold">{stats.upcomingTrips}</p>
+                      <p className="text-2xl font-bold">{stats.upcomingTrips || 0}</p>
                     </div>
                     <Calendar className="h-8 w-8 text-green-200" />
                   </div>
@@ -206,7 +208,7 @@ const TripsPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-purple-100 text-sm">Destinations</p>
-                      <p className="text-2xl font-bold">{stats.totalDestinations}</p>
+                      <p className="text-2xl font-bold">{stats.totalDestinations || 0}</p>
                     </div>
                     <MapPin className="h-8 w-8 text-purple-200" />
                   </div>
@@ -216,7 +218,7 @@ const TripsPage: React.FC = () => {
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-orange-100 text-sm">Completed</p>
-                      <p className="text-2xl font-bold">{stats.completedTrips}</p>
+                      <p className="text-2xl font-bold">{stats.completedTrips || 0}</p>
                     </div>
                     <TrendingUp className="h-8 w-8 text-orange-200" />
                   </div>
@@ -409,7 +411,7 @@ const TripsPage: React.FC = () => {
                       </span>
                     ) : (
                       <>
-                        Showing {filteredTrips.length} of {trips.length} trips
+                        Showing {(filteredTrips || []).length} of {(trips || []).length} trips
                         {searchQuery && (
                           <span className="ml-1">for "{searchQuery}"</span>
                         )}
@@ -443,14 +445,14 @@ const TripsPage: React.FC = () => {
                     <TripCardSkeleton key={index} />
                   ))}
                 </div>
-              ) : filteredTrips.length > 0 ? (
+              ) : (filteredTrips || []).length > 0 ? (
                 <div className={clsx(
                   'grid gap-6',
                   viewMode === 'grid' 
                     ? 'grid-cols-1 md:grid-cols-2 xl:grid-cols-3' 
                     : 'grid-cols-1'
                 )}>
-                  {filteredTrips.map((trip) => (
+                  {(filteredTrips || []).map((trip) => (
                     <TripCard
                       key={trip.id}
                       trip={trip}

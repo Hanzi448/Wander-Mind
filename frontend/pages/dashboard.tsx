@@ -47,7 +47,7 @@ const DashboardPage: React.FC = () => {
   const { favorites, loading: favoritesLoading, toggleFavorite } = useFavorites();
 
   useEffect(() => {
-    if (trips.length > 0) {
+    if ((trips || []).length > 0) {
       categorizeTrips();
     }
   }, [trips]);
@@ -55,13 +55,14 @@ const DashboardPage: React.FC = () => {
   const categorizeTrips = () => {
     setIsLoadingTrips(true);
     const today = new Date();
+    const safeTrips = trips || [];
     
-    const upcoming = trips
+    const upcoming = safeTrips
       .filter(trip => isFuture(new Date(trip.start_date)))
       .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
       .slice(0, 3);
     
-    const recent = trips
+    const recent = safeTrips
       .filter(trip => isPast(new Date(trip.end_date)))
       .sort((a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime())
       .slice(0, 3);
@@ -88,17 +89,18 @@ const DashboardPage: React.FC = () => {
 
   const getCurrentTrips = () => {
     const today = new Date();
-    return trips.filter(trip => 
+    const safeTrips = trips || [];
+    return safeTrips.filter(trip => 
       new Date(trip.start_date) <= today && new Date(trip.end_date) >= today
     );
   };
 
   const currentTrips = getCurrentTrips();
-  const allDestinations = favorites.concat(
-    trips.flatMap(trip => trip.destinations)
+  const allDestinations = (favorites || []).concat(
+    (trips || []).flatMap(trip => trip.destinations || [])
       .filter((dest, index, self) => 
         index === self.findIndex(d => d.id === dest.id) &&
-        !favorites.some(fav => fav.id === dest.id)
+        !(favorites || []).some(fav => fav.id === dest.id)
       )
   );
 
@@ -276,7 +278,7 @@ const DashboardPage: React.FC = () => {
                         {favoritesLoading ? (
                           <LoadingSpinner size="sm" />
                         ) : (
-                          favorites.length
+                          (favorites || []).length
                         )}
                       </p>
                     </div>
@@ -350,9 +352,9 @@ const DashboardPage: React.FC = () => {
                       <DestinationCardSkeleton key={index} />
                     ))}
                   </div>
-                ) : favorites.length > 0 ? (
+                ) : (favorites || []).length > 0 ? (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {favorites.slice(0, 3).map((destination) => (
+                    {(favorites || []).slice(0, 3).map((destination) => (
                       <DestinationCard
                         key={destination.id}
                         destination={destination}
@@ -427,7 +429,7 @@ const DashboardPage: React.FC = () => {
                     <TripCardSkeleton key={index} />
                   ))}
                 </div>
-              ) : trips.length > 0 ? (
+              ) : (trips || []).length > 0 ? (
                 <div className="space-y-8">
                   {/* Upcoming Trips */}
                   {upcomingTrips.length > 0 && (
@@ -522,9 +524,9 @@ const DashboardPage: React.FC = () => {
                     <DestinationCardSkeleton key={index} />
                   ))}
                 </div>
-              ) : favorites.length > 0 ? (
+              ) : (favorites || []).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {favorites.map((destination) => (
+                  {(favorites || []).map((destination) => (
                     <DestinationCard
                       key={destination.id}
                       destination={destination}

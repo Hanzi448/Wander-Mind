@@ -66,9 +66,10 @@ const DestinationsPage: React.FC = () => {
       const response = await destinationService.getDestinations({
         page_size: 50, // Load more destinations for better filtering
       });
-      setDestinations(response.results);
+      setDestinations(response.results || []);
     } catch (error) {
       console.error('Failed to load destinations:', error);
+      setDestinations([]); // Set to empty array on error
     } finally {
       setIsLoading(false);
     }
@@ -77,14 +78,15 @@ const DestinationsPage: React.FC = () => {
   const loadCountries = async () => {
     try {
       const countryList = await destinationService.getCountries();
-      setCountries(countryList);
+      setCountries(countryList || []);
     } catch (error) {
       console.error('Failed to load countries:', error);
+      setCountries([]); // Set to empty array on error
     }
   };
 
   const applyFilters = () => {
-    let filtered = [...destinations];
+    let filtered = [...(destinations || [])];
 
     // Search filter
     if (filters.searchTerm) {
@@ -193,7 +195,7 @@ const DestinationsPage: React.FC = () => {
                   Discover Destinations
                 </h1>
                 <p className="text-gray-600">
-                  Explore {destinations.length}+ amazing destinations worldwide
+                  Explore {(destinations || []).length}+ amazing destinations worldwide
                 </p>
               </div>
               
@@ -286,7 +288,7 @@ const DestinationsPage: React.FC = () => {
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                   >
                     <option value="">All Countries</option>
-                    {countries.map((country) => (
+                    {(countries || []).map((country) => (
                       <option key={country} value={country}>
                         {country}
                       </option>
@@ -385,7 +387,7 @@ const DestinationsPage: React.FC = () => {
                       </span>
                     ) : (
                       <>
-                        Showing {filteredDestinations.length} of {destinations.length} destinations
+                        Showing {(filteredDestinations || []).length} of {(destinations || []).length} destinations
                         {filters.searchTerm && (
                           <span className="ml-1">for "{filters.searchTerm}"</span>
                         )}
@@ -452,18 +454,18 @@ const DestinationsPage: React.FC = () => {
                     <DestinationCardSkeleton key={index} />
                   ))}
                 </div>
-              ) : filteredDestinations.length > 0 ? (
+              ) : (filteredDestinations || []).length > 0 ? (
                 <div className={clsx(
                   'grid gap-6',
                   viewMode === 'grid' 
                     ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' 
                     : 'grid-cols-1'
                 )}>
-                  {filteredDestinations.map((destination) => (
+                  {(filteredDestinations || []).map((destination) => (
                     <DestinationCard
                       key={destination.id}
                       destination={destination}
-                      isFavorite={favorites.some(fav => fav.id === destination.id)}
+                      isFavorite={(favorites || []).some(fav => fav.id === destination.id)}
                       onFavoriteToggle={handleFavoriteToggle}
                       showWeather={true}
                       variant={viewMode === 'list' ? 'compact' : 'default'}

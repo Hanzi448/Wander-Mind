@@ -33,7 +33,7 @@ const HomePage: React.FC = () => {
   const [isLoadingDestinations, setIsLoadingDestinations] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const router = useRouter();
-  
+
   const { isAuthenticated, user } = useAuthStore();
   const { favorites, toggleFavorite } = useFavorites();
   const { stats } = useTripStats();
@@ -65,7 +65,7 @@ const HomePage: React.FC = () => {
       router.push('/auth/login');
       return;
     }
-    
+
     try {
       await toggleFavorite(destinationId);
     } catch (error) {
@@ -144,13 +144,13 @@ const HomePage: React.FC = () => {
       <section className="relative overflow-hidden bg-gradient-to-br from-primary-600 via-travel-600 to-purple-700">
         <div className="absolute inset-0 bg-black/20"></div>
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/20 to-purple-600/20"></div>
-        
+
         {/* Background Pattern */}
         <div className="absolute inset-0 opacity-10">
           <div className="absolute top-0 left-0 w-full h-full"
-               style={{
-                 backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-               }}
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.1'%3E%3Ccircle cx='30' cy='30' r='1'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
+            }}
           />
         </div>
 
@@ -164,11 +164,11 @@ const HomePage: React.FC = () => {
                 WanderMind
               </h1>
             </div>
-            
+
             <h2 className="text-xl lg:text-2xl text-blue-100 mb-8 max-w-3xl mx-auto leading-relaxed">
               Your Intelligent Travel Companion for Unforgettable Journeys
             </h2>
-            
+
             <p className="text-lg text-blue-100 mb-12 max-w-2xl mx-auto">
               Discover amazing destinations, create AI-powered itineraries, and manage all your travels in one smart platform.
             </p>
@@ -312,7 +312,7 @@ const HomePage: React.FC = () => {
                 <DestinationCardSkeleton key={index} />
               ))
             ) : (
-              popularDestinations.map((destination) => (
+              (popularDestinations || []).map((destination) => (
                 <DestinationCard
                   key={destination.id}
                   destination={destination}
@@ -326,6 +326,7 @@ const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
+
 
       {/* Statistics Section */}
       <section className="py-20 bg-gradient-to-r from-primary-600 to-travel-600">
@@ -383,11 +384,11 @@ const HomePage: React.FC = () => {
                     <Star key={i} className="h-5 w-5 text-yellow-400 fill-yellow-400" />
                   ))}
                 </div>
-                
+
                 <blockquote className="text-gray-700 mb-6 italic">
                   "{testimonial.text}"
                 </blockquote>
-                
+
                 <div className="flex items-center space-x-3">
                   <img
                     src={testimonial.avatar}
@@ -419,7 +420,7 @@ const HomePage: React.FC = () => {
             <p className="text-xl text-gray-300 mb-8">
               Join WanderMind today and let AI help you create the perfect travel experience tailored just for you.
             </p>
-            
+
             <div className="flex flex-col sm:flex-row items-center justify-center space-y-4 sm:space-y-0 sm:space-x-6">
               {isAuthenticated ? (
                 <>
