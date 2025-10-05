@@ -31,14 +31,20 @@ class TripViewSet(viewsets.ModelViewSet):
         # Ensure logged-in user is linked to trip
         trip = serializer.save(user=self.request.user)
 
-        dest = trip.destination
-        if dest.latitude and dest.longitude:
-            try:
-                weather = get_weather(dest.latitude, dest.longitude)
-                trip.weather_snapshot = weather
-                trip.save(update_fields=["weather_snapshot"])
-            except Exception:
-                pass
+        # Get all destinations for this trip
+        destinations = trip.destinations.all()
+        
+        # Get weather for the first destination (or you could get all)
+        if destinations.exists():
+            first_dest = destinations.first()
+            if first_dest.latitude and first_dest.longitude:
+                try:
+                    weather = get_weather(first_dest.latitude, first_dest.longitude)
+                    trip.weather_snapshot = weather
+                    trip.save(update_fields=["weather_snapshot"])
+                except Exception as e:
+                    print(f"Weather fetch failed: {e}")
+                    pass
 
     @action(detail=True, methods=["post"])
     def generate_itinerary(self, request, pk=None):
@@ -55,11 +61,15 @@ class TripViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_200_OK
             )
 
+        # Get all destinations
+        destinations = trip.destinations.all()
+        destination_names = ", ".join([d.name for d in destinations])
+
         # Configure Gemini
         genai.configure(api_key=settings.GEMINI_API_KEY)
         prompt = f"""
         You are a professional travel planner AI.
-        Create a detailed {trip.days}-day itinerary for {trip.destination.name}.
+        Create a detailed {trip.days}-day itinerary for visiting {destination_names}.
         Dates: {trip.start_date} → {trip.end_date}.
         Budget: {trip.budget or 'medium'}.
         Style: {trip.style or 'general'}.
@@ -94,7 +104,7 @@ class TripViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
-    #Weather API integration
+    # Weather API integration
     @action(detail=True, methods=["get"])
     def weather(self, request, pk=None):
         """
@@ -102,7 +112,16 @@ class TripViewSet(viewsets.ModelViewSet):
         clipped to the trip date range.
         """
         trip = self.get_object()
-        dest = trip.destination
+        
+        # Get first destination (or you could combine weather for all)
+        destinations = trip.destinations.all()
+        if not destinations.exists():
+            return Response(
+                {"error": "No destinations found for this trip"}, 
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        dest = destinations.first()
 
         try:
             data = get_trip_forecast(

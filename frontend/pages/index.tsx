@@ -443,7 +443,7 @@ const HomePage: React.FC = () => {
                     </Button>
                   </Link>
                   <Link href="/auth/login">
-                    <Button variant="outline" size="lg" className="border-gray-600 text-white hover:bg-gray-700">
+                    <Button variant="outline" size="lg" className="border-gray-600 text-white !bg-gray-500 hover:bg-gray-700">
                       Sign In
                     </Button>
                   </Link>

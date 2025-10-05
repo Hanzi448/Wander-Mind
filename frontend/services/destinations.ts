@@ -47,7 +47,16 @@ export const destinationService = {
     const queryString = searchParams.toString();
     const url = queryString ? `${API_ENDPOINTS.DESTINATIONS}?${queryString}` : API_ENDPOINTS.DESTINATIONS;
     
-    const response = await api.get<DestinationListResponse>(url);
+    const response = await api.get<any>(url);
+    
+    // Handle both array and paginated responses
+    if (Array.isArray(response.data)) {
+      return {
+        results: response.data,
+        count: response.data.length,
+      };
+    }
+    
     return response.data;
   },
 
@@ -57,10 +66,15 @@ export const destinationService = {
     return response.data;
   },
 
-  // Get weather for destination
-  getDestinationWeather: async (id: number): Promise<Weather> => {
+  // Get weather for destination (alias for consistency)
+  getWeather: async (id: number): Promise<Weather> => {
     const response = await api.get<Weather>(API_ENDPOINTS.DESTINATION_WEATHER(id));
     return response.data;
+  },
+
+  // Get weather for destination (original method name)
+  getDestinationWeather: async (id: number): Promise<Weather> => {
+    return destinationService.getWeather(id);
   },
 
   // Add destination to favorites
@@ -75,8 +89,14 @@ export const destinationService = {
 
   // Get user's favorite destinations
   getFavorites: async (): Promise<Destination[]> => {
-    const response = await api.get<Destination[]>(API_ENDPOINTS.MY_FAVORITES);
-    return response.data;
+    const response = await api.get<any>(API_ENDPOINTS.MY_FAVORITES);
+    
+    // Handle both array and paginated responses
+    if (Array.isArray(response.data)) {
+      return response.data;
+    }
+    
+    return response.data.results || [];
   },
 
   // Check if destination is favorited
@@ -91,8 +111,8 @@ export const destinationService = {
 
   // Get countries list (for filtering)
   getCountries: async (): Promise<string[]> => {
-    const destinations = await destinationService.getDestinations();
-    const countries = Array.from(new Set(destinations.results.map(dest => dest.country)));
+    const response = await destinationService.getDestinations({ page_size: 1000 });
+    const countries = Array.from(new Set(response.results.map(dest => dest.country)));
     return countries.sort();
   },
 
@@ -123,7 +143,7 @@ export const destinationService = {
   ): Promise<Destination[]> => {
     // Note: This would require backend support for geospatial queries
     // For now, we'll get all destinations and filter client-side
-    const allDestinations = await destinationService.getDestinations();
+    const allDestinations = await destinationService.getDestinations({ page_size: 1000 });
     
     return allDestinations.results.filter(dest => {
       if (!dest.latitude || !dest.longitude) return false;
@@ -170,9 +190,10 @@ export const useDestinations = () => {
       setLoading(true);
       setError(null);
       const response = await destinationService.getDestinations(params);
-      setDestinations(response.results);
+      setDestinations(response.results || []);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch destinations');
+      setDestinations([]);
     } finally {
       setLoading(false);
     }
@@ -242,9 +263,10 @@ export const useFavorites = () => {
       setLoading(true);
       setError(null);
       const response = await destinationService.getFavorites();
-      setFavorites(response);
+      setFavorites(response || []);
     } catch (err: any) {
       setError(err.message || 'Failed to fetch favorites');
+      setFavorites([]);
     } finally {
       setLoading(false);
     }

@@ -66,7 +66,7 @@ const DestinationsPage: React.FC = () => {
       const response = await destinationService.getDestinations({
         page_size: 50, // Load more destinations for better filtering
       });
-      setDestinations(response.results || []);
+      setDestinations(Array.isArray(response) ? response : (response.results || []));
     } catch (error) {
       console.error('Failed to load destinations:', error);
       setDestinations([]); // Set to empty array on error

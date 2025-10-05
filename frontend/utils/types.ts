@@ -43,6 +43,12 @@ export interface Destination {
   longitude?: number;
   created_at: string;
   updated_at: string;
+
+  best_time_to_visit?: string;
+  average_temperature?: number;
+  popular_activities?: string[];
+  local_currency?: string;
+  time_zone?: string;
 }
 
 export interface Favorite {
