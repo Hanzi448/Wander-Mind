@@ -55,7 +55,16 @@ export const tripService = {
     const queryString = searchParams.toString();
     const url = queryString ? `${API_ENDPOINTS.TRIPS}?${queryString}` : API_ENDPOINTS.TRIPS;
     
-    const response = await api.get<TripListResponse>(url);
+    const response = await api.get<any>(url);
+    
+    // Handle both array and paginated responses
+    if (Array.isArray(response.data)) {
+      return {
+        results: response.data,
+        count: response.data.length,
+      };
+    }
+    
     return response.data;
   },
 
@@ -102,7 +111,7 @@ export const tripService = {
       page_size: limit
     });
     
-    return response.results.filter(trip => trip.start_date >= today);
+    return (response.results || []).filter(trip => trip.start_date >= today);
   },
 
   // Get past trips
@@ -113,7 +122,7 @@ export const tripService = {
       page_size: limit
     });
     
-    return response.results.filter(trip => trip.end_date < today);
+    return (response.results || []).filter(trip => trip.end_date < today);
   },
 
   // Get current trips (happening now)
@@ -121,7 +130,7 @@ export const tripService = {
     const today = new Date().toISOString().split('T')[0];
     const response = await tripService.getTrips();
     
-    return response.results.filter(trip => 
+    return (response.results || []).filter(trip => 
       trip.start_date <= today && trip.end_date >= today
     );
   },
@@ -154,12 +163,13 @@ export const tripService = {
   }> => {
     const trips = await tripService.getTrips();
     const today = new Date().toISOString().split('T')[0];
+    const allTrips = trips.results || [];
     
-    const upcoming = trips.results.filter(trip => trip.start_date > today);
-    const completed = trips.results.filter(trip => trip.end_date < today);
+    const upcoming = allTrips.filter(trip => trip.start_date > today);
+    const completed = allTrips.filter(trip => trip.end_date < today);
     
     // Count unique destinations
-    const allDestinations = trips.results.flatMap(trip => trip.destinations);
+    const allDestinations = allTrips.flatMap(trip => trip.destinations || []);
     const uniqueDestinations = new Set(allDestinations.map(dest => dest.id));
     
     // Find most visited destination
@@ -168,17 +178,18 @@ export const tripService = {
       destinationCounts[dest.name] = (destinationCounts[dest.name] || 0) + 1;
     });
     
-    const favoriteDestination = Object.keys(destinationCounts).reduce(
-      (a, b) => destinationCounts[a] > destinationCounts[b] ? a : b,
-      ''
-    );
+    const favoriteDestination = Object.keys(destinationCounts).length > 0
+      ? Object.keys(destinationCounts).reduce(
+          (a, b) => destinationCounts[a] > destinationCounts[b] ? a : b
+        )
+      : undefined;
 
     return {
-      totalTrips: trips.results.length,
+      totalTrips: allTrips.length,
       upcomingTrips: upcoming.length,
       completedTrips: completed.length,
       totalDestinations: uniqueDestinations.size,
-      favoriteDestination: favoriteDestination || undefined,
+      favoriteDestination,
     };
   },
 };
@@ -194,9 +205,12 @@ export const useTrips = () => {
       setLoading(true);
       setError(null);
       const response = await tripService.getTrips(params);
-      setTrips(response.results);
+      console.log('Trips fetched:', response.results); // Debug log
+      setTrips(response.results || []);
     } catch (err: any) {
+      console.error('Fetch trips error:', err);
       setError(err.message || 'Failed to fetch trips');
+      setTrips([]);
     } finally {
       setLoading(false);
     }

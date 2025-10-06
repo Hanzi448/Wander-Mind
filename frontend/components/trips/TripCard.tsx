@@ -127,11 +127,13 @@ const TripCard: React.FC<TripCardProps> = ({
                 {tripStatus.status}
               </span>
             </div>
-            
+
             <div className="flex items-center space-x-1 text-gray-500 text-sm">
               <MapPin className="h-4 w-4 flex-shrink-0" />
               <span className="truncate">
-                {trip.destinations.slice(0, 2).map(d => d.name).join(', ')}
+                {trip.destinations.length > 0
+                  ? trip.destinations.slice(0, 2).map(d => d.name).join(', ')
+                  : 'No destinations selected'}
                 {trip.destinations.length > 2 && ` +${trip.destinations.length - 2} more`}
               </span>
             </div>
@@ -149,7 +151,7 @@ const TripCard: React.FC<TripCardProps> = ({
               {/* Empty children to satisfy ButtonProps */}
               <></>
             </Button>
-            
+
             {showActionsMenu && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-10">
                 <button
@@ -162,7 +164,7 @@ const TripCard: React.FC<TripCardProps> = ({
                   <Eye className="h-4 w-4" />
                   <span>View Details</span>
                 </button>
-                
+
                 <button
                   onClick={() => {
                     onEdit?.(trip);
@@ -173,7 +175,7 @@ const TripCard: React.FC<TripCardProps> = ({
                   <Edit3 className="h-4 w-4" />
                   <span>Edit Trip</span>
                 </button>
-                
+
                 <button
                   onClick={() => {
                     handleClone();
@@ -189,7 +191,7 @@ const TripCard: React.FC<TripCardProps> = ({
                   )}
                   <span>Clone Trip</span>
                 </button>
-                
+
                 <button
                   onClick={() => {
                     handleShare();
@@ -200,9 +202,9 @@ const TripCard: React.FC<TripCardProps> = ({
                   <Share2 className="h-4 w-4" />
                   <span>Share Trip</span>
                 </button>
-                
+
                 <div className="border-t border-gray-100 my-1" />
-                
+
                 <button
                   onClick={() => {
                     setShowDeleteModal(true);
@@ -300,7 +302,7 @@ const TripCard: React.FC<TripCardProps> = ({
             >
               Edit
             </Button>
-            
+
             <Button
               variant="primary"
               size="sm"
@@ -324,7 +326,7 @@ const TripCard: React.FC<TripCardProps> = ({
           <p className="text-gray-600">
             Are you sure you want to delete "{trip.name}"? This action cannot be undone.
           </p>
-          
+
           <div className="flex items-center space-x-3 justify-end">
             <Button
               variant="ghost"

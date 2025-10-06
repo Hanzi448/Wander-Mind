@@ -148,6 +148,7 @@ export const useAuthStore = create<AuthStore>()(
 
           return true;
         } catch (error) {
+          console.error('Token refresh failed:', error);
           get().clearAuth();
           return false;
         }
@@ -232,6 +233,17 @@ api.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // Prevent infinite loop - don't retry refresh endpoint itself
+    if (originalRequest.url?.includes('/refresh/')) {
+      console.error('Refresh token failed - clearing auth');
+      useAuthStore.getState().clearAuth();
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth/login';
+      }
+      return Promise.reject(error);
+    }
+
+    // Handle 401 errors by attempting token refresh
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
@@ -241,6 +253,11 @@ api.interceptors.response.use(
         const newToken = useAuthStore.getState().accessToken;
         originalRequest.headers.Authorization = `Bearer ${newToken}`;
         return api(originalRequest);
+      } else {
+        // Refresh failed - redirect to login
+        if (typeof window !== 'undefined') {
+          window.location.href = '/auth/login';
+        }
       }
     }
 
