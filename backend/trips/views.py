@@ -3,7 +3,8 @@ from rest_framework.response import Response
 from rest_framework.decorators import action
 from django.conf import settings
 from datetime import date
-import google.generativeai as genai
+from google import genai
+from google.genai.types import Content
 import json
 from core.services.weather import get_trip_forecast, WeatherError
 
@@ -48,25 +49,17 @@ class TripViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def generate_itinerary(self, request, pk=None):
-        """
-        Generate AI-powered itinerary for an existing trip.
-        If itinerary already exists, return cached version.
-        """
         trip = self.get_object()
 
-        # Prevent regenerating unless explicitly requested
         if trip.itinerary and not request.data.get("regenerate", False):
             return Response(
                 {"itinerary": trip.itinerary, "cached": True},
                 status=status.HTTP_200_OK
             )
 
-        # Get all destinations
         destinations = trip.destinations.all()
         destination_names = ", ".join([d.name for d in destinations])
 
-        # Configure Gemini
-        genai.configure(api_key=settings.GEMINI_API_KEY)
         prompt = f"""
         You are a professional travel planner AI.
         Create a detailed {trip.days}-day itinerary for visiting {destination_names}.
@@ -82,17 +75,26 @@ class TripViewSet(viewsets.ModelViewSet):
         """
 
         try:
-            model = genai.GenerativeModel("gemini-1.5-flash")
-            response = model.generate_content(prompt)
+            client = genai.Client(api_key=settings.GEMINI_API_KEY)
+
+            # New SDK format: Content → Part.text()
+            response = client.models.generate_content(
+                model="gemini-1.5-pro",
+                contents=[
+                    Content(
+                        role="user",
+                        parts=[Part.from_text(prompt)]
+                    )
+                ]
+            )
+
             text_response = response.text
 
-            # Try to parse AI response as JSON
             try:
                 itinerary_json = json.loads(text_response)
             except Exception:
                 itinerary_json = {"raw_text": text_response}
 
-            # Save itinerary
             trip.itinerary = itinerary_json
             trip.save()
 
