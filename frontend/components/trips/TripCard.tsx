@@ -108,7 +108,7 @@ const TripCard: React.FC<TripCardProps> = ({
   return (
     <>
       <div className={clsx(
-        'bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-100',
+        'bg-white rounded-xl shadow-md h-fit w-fit hover:shadow-lg transition-all duration-300 overflow-hidden group border border-gray-100',
         variant === 'compact' ? 'p-4' : 'p-6',
         className
       )}>
@@ -301,15 +301,6 @@ const TripCard: React.FC<TripCardProps> = ({
               className="opacity-0 group-hover:opacity-100 transition-all duration-300"
             >
               Edit
-            </Button>
-
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => onViewDetails?.(trip)}
-              className="opacity-0 group-hover:opacity-100 transition-all duration-300"
-            >
-              {trip.itinerary ? 'View Itinerary' : 'Plan Trip'}
             </Button>
           </div>
         </div>

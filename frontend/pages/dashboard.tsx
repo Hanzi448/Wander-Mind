@@ -176,7 +176,11 @@ const DashboardPage: React.FC = () => {
                     </p>
                   </div>
                 </div>
-                <Button variant="outline" className="bg-white/20 border-white/30 text-white hover:bg-white/30">
+                <Button
+                  variant="outline"
+                  className="bg-white/20 border-white/30 text-white hover:bg-white/30"
+                  onClick={() => router.push(`/trips/${currentTrips[0].id}`)}
+                >
                   View Details
                 </Button>
               </div>

@@ -92,6 +92,7 @@ export interface Weather {
   humidity: string;
   description?: string;
   icon?: string;
+  daily: {temp_avg: string, notes: string, icon: string}[];
 }
 
 // Currency Types

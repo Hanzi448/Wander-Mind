@@ -2,6 +2,9 @@ import os
 from pathlib import Path
 from datetime import timedelta
 import environ
+import cloudinary
+import cloudinary.uploader
+import cloudinary.api
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -118,3 +121,13 @@ MEDIA_ROOT = BASE_DIR / "media"
 
 # CORS
 CORS_ALLOW_ALL_ORIGINS = True
+
+# Cloudinary Config
+cloudinary.config(
+    cloud_name=env("CLOUDINARY_CLOUD_NAME"),
+    api_key=env("CLOUDINARY_API_KEY"),
+    api_secret=env("CLOUDINARY_API_SECRET"),
+    secure=True
+)
+
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'

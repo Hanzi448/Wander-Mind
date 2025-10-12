@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { format, parseISO } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import {
   Sparkles,
   MapPin,
@@ -75,28 +75,86 @@ const ItineraryView: React.FC<ItineraryViewProps> = ({
   const parseItinerary = (itineraryData: any): ItineraryDay[] => {
     if (!itineraryData) return [];
 
-    // Handle different possible formats from AI
+    // Handle raw_text format from backend
+    if (itineraryData.raw_text) {
+      const rawText = itineraryData.raw_text;
+
+      // Extract JSON from markdown code blocks
+      let jsonText = rawText;
+      if (rawText.includes('```json')) {
+        const match = rawText.match(/```json\s*\n?([\s\S]*?)\n?```/);
+        if (match) {
+          jsonText = match[1];
+        }
+      }
+
+      // Try to parse the JSON
+      try {
+        const parsed = JSON.parse(jsonText);
+        return convertToDayFormat(parsed);
+      } catch (e) {
+        console.error('Failed to parse itinerary JSON:', e);
+        return [];
+      }
+    }
+
+    // Handle array format
     if (Array.isArray(itineraryData)) {
       return itineraryData;
     }
 
+    // Handle days object format
     if (typeof itineraryData === 'object' && itineraryData.days) {
       return itineraryData.days;
     }
 
-    // Parse text-based itinerary if needed
-    if (typeof itineraryData === 'string') {
-      return parseTextItinerary(itineraryData);
-    }
-
-    return [];
+    // Try to convert object with Day keys to array
+    return convertToDayFormat(itineraryData);
   };
 
+  // Helper function to convert {"Day 1": [...], "Day 2": [...]} to array format
+  const convertToDayFormat = (data: any): ItineraryDay[] => {
+    const days: ItineraryDay[] = [];
+
+    // Sort keys to ensure proper order (Day 1, Day 2, etc.)
+    const sortedKeys = Object.keys(data).sort((a, b) => {
+      const dayNumA = parseInt(a.match(/\d+/)?.[0] || '0');
+      const dayNumB = parseInt(b.match(/\d+/)?.[0] || '0');
+      return dayNumA - dayNumB;
+    });
+
+    sortedKeys.forEach((key, index) => {
+      if (key.toLowerCase().includes('day')) {
+        const activities = Array.isArray(data[key]) ? data[key] : [data[key]];
+
+        // Extract day number from the key (e.g., "Day 1" -> 1)
+        const dayNumber = parseInt(key.match(/\d+/)?.[0] || String(index + 1));
+
+        days.push({
+          day: dayNumber,
+          date: format(addDays(parseISO(trip.start_date), dayNumber - 1), 'yyyy-MM-dd'),
+          activities: activities.map((activity: string, actIndex: number) => ({
+            id: `${dayNumber}-${actIndex}`,
+            time: '09:00',
+            title: activity.split(':')[0] || 'Activity',
+            description: activity,
+            location: trip.destinations[0]?.name || 'Location',
+            duration: '2-3 hours',
+            type: 'sightseeing' as const,
+            priority: 'medium' as const,
+          })),
+          meals: [],
+        });
+      }
+    });
+
+    return days;
+  };
   const parseTextItinerary = (text: string): ItineraryDay[] => {
     // Basic text parsing for AI-generated itineraries
     // This would be more sophisticated in a real implementation
     const days = text.split(/Day \d+/i).slice(1);
-    
+
     return days.map((dayText, index) => ({
       day: index + 1,
       date: format(new Date(trip.start_date).setDate(new Date(trip.start_date).getDate() + index), 'yyyy-MM-dd'),
@@ -274,7 +332,7 @@ const ItineraryView: React.FC<ItineraryViewProps> = ({
                 {format(parseISO(trip.start_date), 'MMM d')} - {format(parseISO(trip.end_date), 'MMM d, yyyy')} • {trip.days} days
               </p>
             </div>
-            
+
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
@@ -374,13 +432,13 @@ const ItineraryView: React.FC<ItineraryViewProps> = ({
                             <div className={clsx(
                               'p-2 rounded-lg',
                               activity.priority === 'high' ? 'bg-red-100 text-red-600' :
-                              activity.priority === 'medium' ? 'bg-yellow-100 text-yellow-600' :
-                              'bg-green-100 text-green-600'
+                                activity.priority === 'medium' ? 'bg-yellow-100 text-yellow-600' :
+                                  'bg-green-100 text-green-600'
                             )}>
                               <IconComponent className="h-5 w-5" />
                             </div>
                           </div>
-                          
+
                           <div className="flex-1">
                             <div className="flex items-start justify-between">
                               <div>
@@ -391,23 +449,23 @@ const ItineraryView: React.FC<ItineraryViewProps> = ({
                                   <span className="text-sm text-gray-500">•</span>
                                   <span className="text-sm text-gray-500">{activity.duration}</span>
                                 </div>
-                                
+
                                 <h4 className="font-medium text-gray-900 mb-1">
                                   {activity.title}
                                 </h4>
-                                
+
                                 <div className="flex items-center space-x-2 text-sm text-gray-600 mb-2">
                                   <MapPin className="h-4 w-4" />
                                   <span>{activity.location}</span>
                                 </div>
-                                
+
                                 <p className={clsx(
                                   'text-gray-600 text-sm',
                                   !isExpanded && 'line-clamp-2'
                                 )}>
                                   {activity.description}
                                 </p>
-                                
+
                                 {activity.description.length > 100 && (
                                   <button
                                     onClick={() => toggleActivityExpansion(activity.id)}
@@ -417,7 +475,7 @@ const ItineraryView: React.FC<ItineraryViewProps> = ({
                                   </button>
                                 )}
                               </div>
-                              
+
                               {activity.cost && (
                                 <div className="text-right">
                                   <div className="flex items-center space-x-1 text-sm text-gray-600">
@@ -478,7 +536,7 @@ const ItineraryView: React.FC<ItineraryViewProps> = ({
                               </div>
                             </div>
                           )}
-                          
+
                           {currentDay.transport && (
                             <div className="flex items-center space-x-3 bg-white border border-gray-200 rounded-lg p-3">
                               <Car className="h-5 w-5 text-gray-400" />

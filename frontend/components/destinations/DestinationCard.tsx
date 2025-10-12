@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { 
-  Heart, 
-  MapPin, 
-  Eye, 
-  Star, 
+import {
+  Heart,
+  MapPin,
+  Eye,
+  Star,
   CloudSun,
   Users,
   Calendar,
@@ -74,7 +74,7 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
 
     try {
       setIsLoadingFavorite(true);
-      
+
       if (isFavorite) {
         await destinationService.removeFromFavorites(destination.id);
         toast.success('Removed from favorites');
@@ -82,8 +82,8 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
         await destinationService.addToFavorites(destination.id);
         toast.success('Added to favorites');
       }
-      
-      onFavoriteToggle?.(destination.id, !isFavorite);
+
+      // onFavoriteToggle?.(destination.id, !isFavorite);
     } catch (error: any) {
       toast.error(error.message || 'Failed to update favorites');
     } finally {
@@ -96,7 +96,7 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
   };
 
   // Get placeholder image if no image URL
-  const imageUrl = destination.image_url || 
+  const imageUrl = destination.image_url ||
     `https://images.unsplash.com/photo-1488646953014-85cb44e25828?w=400&h=300&fit=crop&q=80`;
 
   // Card variants
@@ -113,7 +113,7 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
   };
 
   return (
-    <div className={clsx(cardVariants[variant], className)}>
+    <div className={clsx(cardVariants[variant], className, 'relative')}>
       {/* Image Section */}
       <div className={clsx('relative overflow-hidden', imageVariants[variant])}>
         <Image
@@ -123,10 +123,10 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
           className="object-cover group-hover:scale-105 transition-transform duration-300"
           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
         />
-        
+
         {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        
+
         {/* Favorite Button */}
         <button
           onClick={handleFavoriteToggle}
@@ -136,11 +136,11 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
           {isLoadingFavorite ? (
             <LoadingSpinner size="sm" color="gray" />
           ) : (
-            <Heart 
+            <Heart
               className={clsx(
                 'h-4 w-4 transition-colors duration-200',
-                isFavorite 
-                  ? 'text-red-500 fill-red-500' 
+                isFavorite
+                  ? 'text-red-500 !fill-red-500'
                   : 'text-gray-400 hover:text-red-500'
               )}
             />
@@ -156,7 +156,7 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
       </div>
 
       {/* Content Section */}
-      <div className={clsx('p-4', variant === 'compact' ? 'p-3' : 'p-4')}>
+      <div className={clsx('p-4 pb-10 relative h-full', variant === 'compact' ? 'p-3' : 'p-4')}>
         {/* Location */}
         <div className="flex items-center space-x-1 text-gray-500 text-sm mb-2">
           <MapPin className="h-3 w-3" />
@@ -181,11 +181,11 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
         {/* Weather */}
         {showWeather && (
           <div className="flex items-center space-x-2 text-sm text-gray-600 mb-3">
-            <CloudSun className="h-4 w-4" />
+            <Image alt='weathericon' height={32} width={32} src={weather?.daily[0].icon || ""} className="h-8 w-8" />
             {isLoadingWeather ? (
               <span>Loading weather...</span>
             ) : weather ? (
-              <span>{weather.temperature}, {weather.condition}</span>
+              <span>{weather?.daily[0].temp_avg}, {weather?.daily[0].notes}</span>
             ) : (
               <span>Weather unavailable</span>
             )}
@@ -210,17 +210,12 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
           </div>
         )}
 
+      </div>
         {/* Actions */}
-        <div className="flex items-center justify-between mt-4">
+        {variant !== 'compact' && (
           <Link
             href={`/destinations/${destination.id}`}
-            className="text-primary-600 hover:text-primary-700 font-medium text-sm flex items-center space-x-1 transition-colors duration-200"
-          >
-            <span>View Details</span>
-            <ArrowRight className="h-3 w-3" />
-          </Link>
-
-          {variant !== 'compact' && (
+            className="h-fit w-fit absolute !bottom-4 left-4">
             <Button
               variant="outline"
               size="sm"
@@ -230,15 +225,14 @@ const DestinationCard: React.FC<DestinationCardProps> = ({
             >
               Explore
             </Button>
-          )}
-        </div>
-      </div>
+          </Link>
+        )}
 
       {/* Hover Effect Overlay */}
       <div className="absolute inset-0 pointer-events-none">
         <div className="absolute inset-0 bg-gradient-to-t from-primary-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
       </div>
-    </div>
+    </div >
   );
 };
 

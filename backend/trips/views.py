@@ -4,7 +4,7 @@ from rest_framework.decorators import action
 from django.conf import settings
 from datetime import date
 from google import genai
-from google.genai.types import Content
+from google.genai.types import Content, Part
 import json
 from core.services.weather import get_trip_forecast, WeatherError
 
@@ -79,11 +79,11 @@ class TripViewSet(viewsets.ModelViewSet):
 
             # New SDK format: Content → Part.text()
             response = client.models.generate_content(
-                model="gemini-1.5-pro",
+                model="models/gemini-2.5-pro",
                 contents=[
                     Content(
                         role="user",
-                        parts=[Part.from_text(prompt)]
+                        parts=[Part(text=prompt)]
                     )
                 ]
             )

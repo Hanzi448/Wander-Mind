@@ -382,7 +382,7 @@ const TripsPage: React.FC = () => {
                 {/* Quick Actions */}
                 <div className="border-t border-gray-200 pt-6">
                   <h4 className="text-sm font-medium text-gray-700 mb-3">Quick Actions</h4>
-                  <div className="space-y-2">
+                  <div className="space-y-2 flex flex-col">
                     <Link href="/trips/create">
                       <Button variant="primary" size="sm" icon={Plus} fullWidth>
                         Create New Trip

@@ -25,6 +25,7 @@ import Layout from '@/components/layout/Layout';
 import Button from '@/components/ui/Button';
 import Input from '@/components/ui/Input';
 import Modal from '@/components/ui/Modal';
+import { uploadService } from '@/services/upload';
 import { LoadingSpinner } from '@/components/ui/Loading';
 import { useAuthStore } from '@/services/auth';
 import { Profile } from '@/utils/types';
@@ -121,8 +122,8 @@ const ProfilePage: React.FC = () => {
 
     try {
       // This would upload to Cloudinary or your storage service
-      // const uploadedUrl = await uploadService.uploadAvatar(file);
-      // await updateProfile({ avatar: uploadedUrl });
+      const uploadedUrl = await uploadService.uploadAvatar(file);
+      await updateProfile({ avatar: uploadedUrl });
       toast.success('Avatar updated successfully');
     } catch (error: any) {
       toast.error(error.message || 'Failed to update avatar');
