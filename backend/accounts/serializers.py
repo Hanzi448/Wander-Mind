@@ -38,20 +38,18 @@ class LoginResponseSerializer(serializers.Serializer):
     access = serializers.CharField()
     user = UserSerializer()
 
+from rest_framework import serializers
+from .models import Profile
+
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ['id', 'user', 'bio', 'avatar', 'location', 'website', 
-                  'phone', 'date_of_birth', 'preferences', 'created_at', 'updated_at']
+        fields = ['id', 'user', 'bio', 'avatar', 'phone', 'created_at', 'updated_at']
         read_only_fields = ['user', 'created_at', 'updated_at']
-    
+
     def update(self, instance, validated_data):
         instance.avatar = validated_data.get('avatar', instance.avatar)
         instance.bio = validated_data.get('bio', instance.bio)
-        instance.location = validated_data.get('location', instance.location)
-        instance.website = validated_data.get('website', instance.website)
         instance.phone = validated_data.get('phone', instance.phone)
-        instance.date_of_birth = validated_data.get('date_of_birth', instance.date_of_birth)
-        instance.preferences = validated_data.get('preferences', instance.preferences)
         instance.save()
         return instance

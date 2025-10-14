@@ -84,12 +84,19 @@ class UploadService {
         } catch (error: any) {
             console.error('Cloudinary upload error:', error);
 
-            if (error.response?.data?.error?.message) {
-                throw new Error(error.response.data.error.message);
+            if (error.response) {
+                console.error("Cloudinary response data:", error.response.data);
+                console.error("Cloudinary status:", error.response.status);
             }
 
-            throw new Error('Failed to upload image. Please try again.');
+            const message =
+                error.response?.data?.error?.message ||
+                error.message ||
+                'Failed to upload image. Please try again.';
+
+            throw new Error(message);
         }
+
     }
 
     /**

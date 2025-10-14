@@ -51,7 +51,6 @@ const passwordSchema = z.object({
 });
 
 type PasswordFormData = z.infer<typeof passwordSchema>;
-
 const ProfilePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'preferences' | 'account'>('profile');
   const [isEditing, setIsEditing] = useState(false);
@@ -124,8 +123,10 @@ const ProfilePage: React.FC = () => {
       // This would upload to Cloudinary or your storage service
       const uploadedUrl = await uploadService.uploadAvatar(file);
       await updateProfile({ avatar: uploadedUrl });
+      console.log('Uploading avatar to Cloudinary...', file);
       toast.success('Avatar updated successfully');
     } catch (error: any) {
+      console.error("Avatar upload failed:", error);
       toast.error(error.message || 'Failed to update avatar');
     }
   };
