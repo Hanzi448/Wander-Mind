@@ -389,4 +389,9 @@ const DestinationDetailPage: React.FC = () => {
   );
 };
 
+export async function getServerSideProps() {
+  return { props: {} };
+}
+
+
 export default DestinationDetailPage;
