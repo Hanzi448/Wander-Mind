@@ -25,7 +25,15 @@ import { destinationService, useFavorites } from '@/services/destinations';
 import { Destination } from '@/utils/types';
 import { clsx } from 'clsx';
 
-export const dynamic = "force-dynamic";
+
+export async function getServerSideProps(context: any) {
+  const { id } = context.params;
+
+  // Pass ID as prop to your component — actual data will be fetched client-side
+  return {
+    props: { id },
+  };
+}
 
 const DestinationDetailPage: React.FC = () => {
   const [destination, setDestination] = useState<Destination | null>(null);
@@ -95,6 +103,7 @@ const DestinationDetailPage: React.FC = () => {
       }
     }
   };
+  
 
   const handleShare = async () => {
     if (navigator.share && destination) {
