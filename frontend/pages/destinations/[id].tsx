@@ -25,6 +25,8 @@ import { destinationService, useFavorites } from '@/services/destinations';
 import { Destination } from '@/utils/types';
 import { clsx } from 'clsx';
 
+export const dynamic = "force-dynamic";
+
 const DestinationDetailPage: React.FC = () => {
   const [destination, setDestination] = useState<Destination | null>(null);
   const [weather, setWeather] = useState<any>(null);
@@ -388,10 +390,5 @@ const DestinationDetailPage: React.FC = () => {
     </Layout>
   );
 };
-
-export async function getServerSideProps() {
-  return { props: {} };
-}
-
 
 export default DestinationDetailPage;
