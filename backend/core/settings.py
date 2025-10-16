@@ -1,21 +1,20 @@
 import os
 from pathlib import Path
 from datetime import timedelta
+import dj_database_url
 import environ
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 env = environ.Env()
-environ.Env.read_env(os.path.join(BASE_DIR, ".env"))
-
+environ.Env.read_env(os.path.join(BASE_DIR, ".env"))  # Load .env for local dev
 SECRET_KEY = env("SECRET_KEY", default="dev-secret-key")
-DEBUG = env("DEBUG", default="True") == "True"
+DEBUG = env.bool("DEBUG", default=False)
 ALLOWED_HOSTS = env("ALLOWED_HOSTS", default="localhost,127.0.0.1").split(",")
-GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID")
-GEMINI_API_KEY = env("GEMINI_API_KEY")
-OPENWEATHER_API_KEY = env("OPENWEATHER_API_KEY")
+GOOGLE_CLIENT_ID = env("GOOGLE_CLIENT_ID", default=None)
+GEMINI_API_KEY = env("GEMINI_API_KEY", default=None)
+OPENWEATHER_API_KEY = env("OPENWEATHER_API_KEY", default=None)
 
-# Installed Apps
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
@@ -29,6 +28,7 @@ INSTALLED_APPS = [
     "rest_framework_simplejwt",
     "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
+    "whitenoise.runserver_nostatic",  #DEPLOYMENT: serve static files efficiently
 
     # Project apps
     "accounts",
@@ -38,6 +38,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # DEPLOYMENT
     "django.contrib.sessions.middleware.SessionMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -48,6 +49,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "core.urls"
+WSGI_APPLICATION = "core.wsgi.application"
+ASGI_APPLICATION = "core.asgi.application"
 
 TEMPLATES = [
     {
@@ -65,25 +68,27 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "core.wsgi.application"
-ASGI_APPLICATION = "core.asgi.application"
+# DEPLOYMENT: use DATABASE_URL from Render if provided, else .env values
+DATABASE_URL = env("DATABASE_URL", default=None)
 
-# Database
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("DB_NAME"),
-        "USER": env("DB_USER"),
-        "PASSWORD": env("DB_PASS"),
-        "HOST": env("DB_HOST"),
-        "PORT": env("DB_PORT"),
+if DATABASE_URL:
+    DATABASES = {
+        "default": dj_database_url.config(default=DATABASE_URL, conn_max_age=600)
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": env("DB_NAME"),
+            "USER": env("DB_USER"),
+            "PASSWORD": env("DB_PASS"),
+            "HOST": env("DB_HOST"),
+            "PORT": env("DB_PORT"),
+        }
+    }
 
-# Custom User
 AUTH_USER_MODEL = "accounts.User"
 
-# DRF & JWT
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework_simplejwt.authentication.JWTAuthentication",
@@ -100,7 +105,6 @@ SIMPLE_JWT = {
     "BLACKLIST_AFTER_ROTATION": True,
 }
 
-# Password validation
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
@@ -108,11 +112,23 @@ AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
 ]
 
-# Static & Media
 STATIC_URL = "/static/"
 MEDIA_URL = "/media/"
+
 STATIC_ROOT = BASE_DIR / "staticfiles"
 MEDIA_ROOT = BASE_DIR / "media"
 
-# CORS
-CORS_ALLOW_ALL_ORIGINS = True
+# DEPLOYMENT: Use WhiteNoise for static file compression & caching
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+CORS_ALLOW_ALL_ORIGINS = True  #OK for demo/showcase project
+
+# Optional: allow credentials if needed
+CORS_ALLOW_CREDENTIALS = True
+
+# DEPLOYMENT: settings for when behind a proxy (e.g. Render)
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+CSRF_TRUSTED_ORIGINS = [
+    "https://*.onrender.com",
+    "https://*.vercel.app",
+]
