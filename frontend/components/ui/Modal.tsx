@@ -80,7 +80,9 @@ const Modal: React.FC<ModalProps> = ({
                         icon={X}
                         onClick={onClose}
                         className="ml-auto -mr-2"
-                      />
+                      >
+                        <span className="sr-only">Close</span>
+                      </Button>
                     )}
                   </div>
                 )}
