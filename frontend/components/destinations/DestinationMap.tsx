@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 import { MapPin, Navigation, ZoomIn, ZoomOut, Maximize2 } from 'lucide-react';
 import Button from '@/components/ui/Button';
 import { Destination } from '@/utils/types';
@@ -71,38 +72,38 @@ const MapControls: React.FC<MapControlsProps> = ({
       <Button
         variant="outline"
         size="sm"
-        icon={ZoomIn}
         onClick={onZoomIn}
-        className="bg-white/90 backdrop-blur-sm shadow-lg border-gray-200"
+        className="bg-white/90 backdrop-blur-sm shadow-lg border-gray-200 flex items-center space-x-1"
       >
-        Zoom In
+        <ZoomIn className="h-4 w-4" />
+        <span>Zoom In</span>
       </Button>
       <Button
         variant="outline"
         size="sm"
-        icon={ZoomOut}
         onClick={onZoomOut}
-        className="bg-white/90 backdrop-blur-sm shadow-lg border-gray-200"
+        className="bg-white/90 backdrop-blur-sm shadow-lg border-gray-200 flex items-center space-x-1"
       >
-        Zoom Out
+        <ZoomOut className="h-4 w-4" />
+        <span>Zoom Out</span>
       </Button>
       <Button
         variant="outline"
         size="sm"
-        icon={Navigation}
         onClick={onLocateUser}
-        className="bg-white/90 backdrop-blur-sm shadow-lg border-gray-200"
+        className="bg-white/90 backdrop-blur-sm shadow-lg border-gray-200 flex items-center space-x-1"
       >
-        Locate
+        <Navigation className="h-4 w-4" />
+        <span>Locate</span>
       </Button>
       <Button
         variant="outline"
         size="sm"
-        icon={Maximize2}
         onClick={onFullscreen}
-        className="bg-white/90 backdrop-blur-sm shadow-lg border-gray-200"
+        className="bg-white/90 backdrop-blur-sm shadow-lg border-gray-200 flex items-center space-x-1"
       >
-        Fullscreen
+        <Maximize2 className="h-4 w-4" />
+        <span>Fullscreen</span>
       </Button>
     </div>
   );

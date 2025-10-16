@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
+import dynamic from 'next/dynamic';
 import { format, differenceInDays, isPast, isFuture } from 'date-fns';
 import {
   Plus,
@@ -26,7 +27,6 @@ import Layout from '@/components/layout/Layout';
 import Button from '@/components/ui/Button';
 import TripCard from '@/components/trips/TripCard';
 import DestinationCard from '@/components/destinations/DestinationCard';
-import DestinationMap from '@/components/destinations/DestinationMap';
 import { LoadingSpinner, TripCardSkeleton, DestinationCardSkeleton } from '@/components/ui/Loading';
 import { useAuthStore } from '@/services/auth';
 import { useTrips, useTripStats } from '@/services/trips';
@@ -34,12 +34,25 @@ import { useFavorites } from '@/services/destinations';
 import { Trip, Destination } from '@/utils/types';
 import { clsx } from 'clsx';
 
+// Dynamic import for DestinationMap to avoid SSR issues with Leaflet
+const DestinationMap = dynamic(
+  () => import('@/components/destinations/DestinationMap'),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-[600px] bg-gray-100 rounded-lg flex items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    ),
+  }
+);
+
 const DashboardPage: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState<'overview' | 'trips' | 'favorites' | 'map'>('overview');
   const [upcomingTrips, setUpcomingTrips] = useState<Trip[]>([]);
   const [recentTrips, setRecentTrips] = useState<Trip[]>([]);
   const [isLoadingTrips, setIsLoadingTrips] = useState(true);
-  
+
   const router = useRouter();
   const { user, profile } = useAuthStore();
   const { trips, loading: tripsLoading } = useTrips();
@@ -56,17 +69,17 @@ const DashboardPage: React.FC = () => {
     setIsLoadingTrips(true);
     const today = new Date();
     const safeTrips = trips || [];
-    
+
     const upcoming = safeTrips
       .filter(trip => isFuture(new Date(trip.start_date)))
       .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime())
       .slice(0, 3);
-    
+
     const recent = safeTrips
       .filter(trip => isPast(new Date(trip.end_date)))
       .sort((a, b) => new Date(b.end_date).getTime() - new Date(a.end_date).getTime())
       .slice(0, 3);
-    
+
     setUpcomingTrips(upcoming);
     setRecentTrips(recent);
     setIsLoadingTrips(false);
@@ -90,7 +103,7 @@ const DashboardPage: React.FC = () => {
   const getCurrentTrips = () => {
     const today = new Date();
     const safeTrips = trips || [];
-    return safeTrips.filter(trip => 
+    return safeTrips.filter(trip =>
       new Date(trip.start_date) <= today && new Date(trip.end_date) >= today
     );
   };
@@ -98,7 +111,7 @@ const DashboardPage: React.FC = () => {
   const currentTrips = getCurrentTrips();
   const allDestinations = (favorites || []).concat(
     (trips || []).flatMap(trip => trip.destinations || [])
-      .filter((dest, index, self) => 
+      .filter((dest, index, self) =>
         index === self.findIndex(d => d.id === dest.id) &&
         !(favorites || []).some(fav => fav.id === dest.id)
       )
@@ -146,13 +159,15 @@ const DashboardPage: React.FC = () => {
 
               <div className="flex items-center space-x-3">
                 <Link href="/trips/create">
-                  <Button variant="primary" icon={Plus}>
-                    Plan New Trip
+                  <Button variant="primary" className="flex items-center space-x-2">
+                    <Plus className="h-4 w-4" />
+                    <span>Plan New Trip</span>
                   </Button>
                 </Link>
                 <Link href="/profile">
-                  <Button variant="outline" icon={Edit3}>
-                    Edit Profile
+                  <Button variant="outline" className="flex items-center space-x-2">
+                    <Edit3 className="h-4 w-4" />
+                    <span>Edit Profile</span>
                   </Button>
                 </Link>
               </div>
@@ -298,8 +313,9 @@ const DashboardPage: React.FC = () => {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-semibold text-gray-900">Upcoming Trips</h2>
                   <Link href="/trips">
-                    <Button variant="outline" icon={ArrowRight}>
-                      View All Trips
+                    <Button variant="outline" className="flex items-center space-x-2">
+                      <span>View All Trips</span>
+                      <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
@@ -331,8 +347,9 @@ const DashboardPage: React.FC = () => {
                       Ready to plan your next adventure?
                     </p>
                     <Link href="/trips/create">
-                      <Button variant="primary" icon={Plus}>
-                        Plan Your First Trip
+                      <Button variant="primary" className="flex items-center space-x-2">
+                        <Plus className="h-4 w-4" />
+                        <span>Plan Your First Trip</span>
                       </Button>
                     </Link>
                   </div>
@@ -344,31 +361,53 @@ const DashboardPage: React.FC = () => {
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-semibold text-gray-900">Recent Favorites</h2>
                   <Link href="/favorites">
-                    <Button variant="outline" icon={ArrowRight}>
-                      View All Favorites
+                    <Button variant="outline" className="flex items-center space-x-2">
+                      <span>View All Favorites</span>
+                      <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
 
-                {favoritesLoading ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {Array.from({ length: 3 }).map((_, index) => (
-                      <DestinationCardSkeleton key={index} />
-                    ))}
-                  </div>
-                ) : (favorites || []).length > 0 ? (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {(favorites || []).slice(0, 3).map((destination) => (
-                      <DestinationCard
-                        key={destination.id}
-                        destination={destination}
-                        isFavorite={true}
-                        onFavoriteToggle={() => handleFavoriteToggle(destination.id)}
-                        showWeather={true}
-                      />
-                    ))}
-                  </div>
-                ) : (
+                {(() => {
+                  if (favoritesLoading) {
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {Array.from({ length: 3 }).map((_, index) => (
+                          <DestinationCardSkeleton key={index} />
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  // Process favorites to handle different data structures
+                  const processedFavorites = (favorites || [])
+                    .map((item: any) => {
+                      // Try different possible structures
+                      if (item?.destination) return item.destination;
+                      if (item?.id && item?.name) return item;
+                      return null;
+                    })
+                    .filter((dest: any) => dest?.id && dest?.name)
+                    .slice(0, 3);
+
+                  console.log('Processed favorites:', processedFavorites);
+
+                  if (processedFavorites.length > 0) {
+                    return (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {processedFavorites.map((destination: any) => (
+                          <DestinationCard
+                            key={destination.id}
+                            destination={destination}
+                            isFavorite={true}
+                            onFavoriteToggle={() => handleFavoriteToggle(destination.id)}
+                          />
+                        ))}
+                      </div>
+                    );
+                  }
+
+                  return (
                   <div className="text-center py-12 bg-white rounded-xl border border-gray-200">
                     <Heart className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -378,12 +417,14 @@ const DashboardPage: React.FC = () => {
                       Start exploring and save destinations you love
                     </p>
                     <Link href="/destinations">
-                      <Button variant="primary" icon={MapPin}>
-                        Explore Destinations
+                      <Button variant="primary" className="flex items-center space-x-2">
+                        <MapPin className="h-4 w-4" />
+                        <span>Explore Destinations</span>
                       </Button>
                     </Link>
                   </div>
-                )}
+                  );
+                })()}
               </div>
 
               {/* Quick Actions */}
@@ -393,21 +434,22 @@ const DashboardPage: React.FC = () => {
                   <p className="text-primary-100 mb-6">
                     Let our AI help you plan the perfect trip based on your preferences and travel history.
                   </p>
-                  
+
                   <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
                     <Link href="/trips/create">
-                      <Button variant="secondary" size="lg" icon={Sparkles}>
-                        Create AI Trip
+                      <Button variant="secondary" size="lg" className="flex items-center space-x-2">
+                        <Sparkles className="h-5 w-5" />
+                        <span>Create AI Trip</span>
                       </Button>
                     </Link>
                     <Link href="/destinations">
-                      <Button 
-                        variant="outline" 
-                        size="lg" 
-                        className="bg-white/20 border-white/30 text-white hover:bg-white/30"
-                        icon={Globe}
+                      <Button
+                        variant="outline"
+                        size="lg"
+                        className="bg-white/20 border-white/30 text-white hover:bg-white/30 flex items-center space-x-2"
                       >
-                        Explore Destinations
+                        <Globe className="h-5 w-5" />
+                        <span>Explore Destinations</span>
                       </Button>
                     </Link>
                   </div>
@@ -421,8 +463,9 @@ const DashboardPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">My Trips</h2>
                 <Link href="/trips/create">
-                  <Button variant="primary" icon={Plus}>
-                    Create New Trip
+                  <Button variant="primary" className="flex items-center space-x-2">
+                    <Plus className="h-4 w-4" />
+                    <span>Create New Trip</span>
                   </Button>
                 </Link>
               </div>
@@ -502,8 +545,9 @@ const DashboardPage: React.FC = () => {
                     Start planning your dream vacation! Create your first trip and let AI help you build the perfect itinerary.
                   </p>
                   <Link href="/trips/create">
-                    <Button variant="primary" size="lg" icon={Plus}>
-                      Create Your First Trip
+                    <Button variant="primary" size="lg" className="flex items-center space-x-2">
+                      <Plus className="h-5 w-5" />
+                      <span>Create Your First Trip</span>
                     </Button>
                   </Link>
                 </div>
@@ -516,8 +560,9 @@ const DashboardPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-bold text-gray-900">My Favorite Destinations</h2>
                 <Link href="/destinations">
-                  <Button variant="outline" icon={MapPin}>
-                    Explore More
+                  <Button variant="outline" className="flex items-center space-x-2">
+                    <MapPin className="h-4 w-4" />
+                    <span>Explore More</span>
                   </Button>
                 </Link>
               </div>
@@ -530,15 +575,22 @@ const DashboardPage: React.FC = () => {
                 </div>
               ) : (favorites || []).length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {(favorites || []).map((destination) => (
-                    <DestinationCard
-                      key={destination.id}
-                      destination={destination}
-                      isFavorite={true}
-                      onFavoriteToggle={() => handleFavoriteToggle(destination.id)}
-                      showWeather={true}
-                    />
-                  ))}
+                  {(favorites || [])
+                    .filter((item: any) => {
+                      const dest = item?.destination || item;
+                      return dest?.id && dest?.name;
+                    })
+                    .map((item: any) => {
+                      const destination = item?.destination || item;
+                      return (
+                        <DestinationCard
+                          key={destination.id}
+                          destination={destination}
+                          isFavorite={true}
+                          onFavoriteToggle={() => handleFavoriteToggle(destination.id)}
+                        />
+                      );
+                    })}
                 </div>
               ) : (
                 <div className="text-center py-16">
@@ -550,8 +602,9 @@ const DashboardPage: React.FC = () => {
                     Discover amazing places around the world and save your favorites for quick access and trip planning.
                   </p>
                   <Link href="/destinations">
-                    <Button variant="primary" size="lg" icon={MapPin}>
-                      Explore Destinations
+                    <Button variant="primary" size="lg" className="flex items-center space-x-2">
+                      <MapPin className="h-5 w-5" />
+                      <span>Explore Destinations</span>
                     </Button>
                   </Link>
                 </div>
@@ -597,13 +650,15 @@ const DashboardPage: React.FC = () => {
                   </p>
                   <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-4">
                     <Link href="/destinations">
-                      <Button variant="primary" icon={MapPin}>
-                        Explore Destinations
+                      <Button variant="primary" className="flex items-center space-x-2">
+                        <MapPin className="h-5 w-5" />
+                        <span>Explore Destinations</span>
                       </Button>
                     </Link>
                     <Link href="/trips/create">
-                      <Button variant="outline" icon={Plus}>
-                        Create Trip
+                      <Button variant="outline" className="flex items-center space-x-2">
+                        <Plus className="h-5 w-5" />
+                        <span>Create Trip</span>
                       </Button>
                     </Link>
                   </div>

@@ -1,17 +1,18 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { 
-  Menu, 
-  X, 
-  User, 
-  LogOut, 
+import {
+  Menu,
+  X,
+  User,
+  LogOut,
   Settings,
   Heart,
   MapPin,
   Plane,
   Home,
-  DollarSign
+  DollarSign,
+  LayoutDashboard
 } from 'lucide-react';
 import { useAuthStore } from '@/services/auth';
 import Button from '@/components/ui/Button';
@@ -22,11 +23,12 @@ const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const router = useRouter();
-  
+
   const { user, isAuthenticated, logout } = useAuthStore();
 
   const iconMap = {
     Home,
+    LayoutDashboard,
     MapPin,
     Plane,
     Heart,
@@ -51,8 +53,8 @@ const Header: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <Link 
-            href="/" 
+          <Link
+            href="/"
             className="flex items-center space-x-2 hover:opacity-80 transition-opacity"
           >
             <div className="bg-gradient-to-r from-primary-600 to-travel-500 p-2 rounded-xl">
@@ -68,7 +70,7 @@ const Header: React.FC = () => {
             {NAV_ITEMS.map((item) => {
               const IconComponent = iconMap[item.icon as keyof typeof iconMap];
               const isActive = isActivePage(item.href);
-              const shouldShow = !item.requiresAuth || isAuthenticated;
+              const shouldShow = !('requiresAuth' in item) || !item.requiresAuth || isAuthenticated;
 
               if (!shouldShow) return null;
 
@@ -128,14 +130,14 @@ const Header: React.FC = () => {
               </div>
             ) : (
               <div className="flex items-center space-x-3">
-                <Button 
-                  variant="ghost" 
+                <Button
+                  variant="ghost"
                   onClick={() => router.push('/auth/login')}
                 >
                   Sign In
                 </Button>
-                <Button 
-                  variant="primary" 
+                <Button
+                  variant="primary"
                   onClick={() => router.push('/auth/register')}
                 >
                   Get Started
@@ -149,9 +151,10 @@ const Header: React.FC = () => {
             <Button
               variant="ghost"
               size="sm"
-              icon={isMenuOpen ? X : Menu}
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-            />
+            >
+              {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </Button>
           </div>
         </div>
 
@@ -162,7 +165,7 @@ const Header: React.FC = () => {
               {NAV_ITEMS.map((item) => {
                 const IconComponent = iconMap[item.icon as keyof typeof iconMap];
                 const isActive = isActivePage(item.href);
-                const shouldShow = !item.requiresAuth || isAuthenticated;
+                const shouldShow = !('requiresAuth' in item) || !item.requiresAuth || isAuthenticated;
 
                 if (!shouldShow) return null;
 
@@ -215,9 +218,9 @@ const Header: React.FC = () => {
                   </div>
                 ) : (
                   <div className="space-y-2">
-                    <Button 
+                    <Button
                       fullWidth
-                      variant="ghost" 
+                      variant="ghost"
                       onClick={() => {
                         router.push('/auth/login');
                         setIsMenuOpen(false);
@@ -225,9 +228,9 @@ const Header: React.FC = () => {
                     >
                       Sign In
                     </Button>
-                    <Button 
+                    <Button
                       fullWidth
-                      variant="primary" 
+                      variant="primary"
                       onClick={() => {
                         router.push('/auth/register');
                         setIsMenuOpen(false);

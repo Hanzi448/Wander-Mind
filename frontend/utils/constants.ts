@@ -1,3 +1,6 @@
+import { icon } from "leaflet";
+import { LayoutDashboard } from "lucide-react";
+
 // API Configuration
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
@@ -52,6 +55,7 @@ export const STYLE_OPTIONS = [
 // Navigation Items
 export const NAV_ITEMS = [
   { label: 'Home', href: '/', icon: 'Home' },
+  { label: 'Dashbaord', href: '/dashboard', icon: 'LayoutDashboard', requiresAuth: true},
   { label: 'Destinations', href: '/destinations', icon: 'MapPin' },
   { label: 'My Trips', href: '/trips', icon: 'Plane', requiresAuth: true },
   { label: 'Favorites', href: '/favorites', icon: 'Heart', requiresAuth: true },

@@ -21,9 +21,9 @@ class DestinationSerializer(serializers.ModelSerializer):
 
 class FavoriteSerializer(serializers.ModelSerializer):
     user = serializers.StringRelatedField(read_only=True)
-    destination = serializers.StringRelatedField(read_only=True)
+    destination = DestinationSerializer(read_only=True)  # ← Changed this line
 
     class Meta:
         model = Favorite
         fields = ["id", "user", "destination", "created_at"]
-        read_only_fields = ["id", "user", "destination", "created_at"]
+        read_only_fields = ["id", "user", "created_at"]

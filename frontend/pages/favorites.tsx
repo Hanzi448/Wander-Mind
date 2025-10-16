@@ -22,6 +22,24 @@ const FavoritesPage: React.FC = () => {
     }
   };
 
+  // Process favorites to extract destination objects
+  const processedFavorites = React.useMemo(() => {
+    return (favorites || [])
+      .map((item: any) => {
+        // If destination is an object, return it
+        if (item?.destination?.id) return item.destination;
+        // If item itself is a destination object
+        if (item?.id && item?.name && typeof item?.destination !== 'string') return item;
+        return null;
+      })
+      .filter((dest: any) => dest?.id && dest?.name);
+  }, [favorites]);
+
+  // Get unique countries
+  const uniqueCountries = React.useMemo(() => {
+    return new Set(processedFavorites.map((f: any) => f.country).filter(Boolean));
+  }, [processedFavorites]);
+
   return (
     <Layout
       title="My Favorites - WanderMind"
@@ -44,20 +62,21 @@ const FavoritesPage: React.FC = () => {
                   {loading ? (
                     'Loading...'
                   ) : (
-                    `${favorites?.length || 0} destination${favorites?.length !== 1 ? 's' : ''} saved`
+                    `${processedFavorites.length} destination${processedFavorites.length !== 1 ? 's' : ''} saved`
                   )}
                 </p>
               </div>
 
               <Link href="/destinations">
-                <Button variant="primary" icon={Plus}>
-                  Discover More
+                <Button variant="primary" className="flex items-center space-x-2">
+                  <Plus className="h-4 w-4" />
+                  <span>Discover More</span>
                 </Button>
               </Link>
             </div>
 
             {/* Quick Stats */}
-            {!loading && favorites && favorites.length > 0 && (
+            {!loading && processedFavorites.length > 0 && (
               <div className="bg-gradient-to-r from-red-50 to-pink-50 rounded-xl p-4 border border-red-100">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
@@ -65,14 +84,15 @@ const FavoritesPage: React.FC = () => {
                     <span className="text-sm text-gray-700">
                       You've saved destinations from{' '}
                       <span className="font-semibold">
-                        {new Set(favorites.map(f => f.country)).size}
+                        {uniqueCountries.size}
                       </span>{' '}
-                      {new Set(favorites.map(f => f.country)).size === 1 ? 'country' : 'countries'}
+                      {uniqueCountries.size === 1 ? 'country' : 'countries'}
                     </span>
                   </div>
                   <Link href="/trips/create">
-                    <Button variant="outline" size="sm" icon={ArrowRight}>
-                      Plan a Trip
+                    <Button variant="outline" size="sm" className="flex items-center space-x-2">
+                      <span>Plan a Trip</span>
+                      <ArrowRight className="h-4 w-4" />
                     </Button>
                   </Link>
                 </div>
@@ -89,23 +109,26 @@ const FavoritesPage: React.FC = () => {
                 <DestinationCardSkeleton key={index} />
               ))}
             </div>
-          ) : favorites && favorites.length > 0 ? (
+          ) : processedFavorites.length > 0 ? (
             <>
-              {/* Group by Country (Optional) */}
+              {/* Section Header */}
               <div className="mb-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
+                <h2 className="text-lg font-semibold text-gray-900 mb-2">
                   All Favorites
                 </h2>
+                <p className="text-sm text-gray-600">
+                  Click on any destination to view details or start planning your trip
+                </p>
               </div>
 
+              {/* Destination Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {favorites.map((destination) => (
+                {processedFavorites.map((destination: any) => (
                   <DestinationCard
                     key={destination.id}
                     destination={destination}
                     isFavorite={true}
                     onFavoriteToggle={() => handleFavoriteToggle(destination.id)}
-                    showWeather={true}
                   />
                 ))}
               </div>
@@ -128,14 +151,16 @@ const FavoritesPage: React.FC = () => {
 
                 <div className="flex flex-col sm:flex-row gap-3 justify-center">
                   <Link href="/destinations">
-                    <Button variant="primary" icon={MapPin}>
-                      Explore Destinations
+                    <Button variant="primary" className="flex items-center space-x-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>Explore Destinations</span>
                     </Button>
                   </Link>
                   
                   <Link href="/trips/create">
-                    <Button variant="outline" icon={Plus}>
-                      Plan a Trip
+                    <Button variant="outline" className="flex items-center space-x-2">
+                      <Plus className="h-4 w-4" />
+                      <span>Plan a Trip</span>
                     </Button>
                   </Link>
                 </div>
