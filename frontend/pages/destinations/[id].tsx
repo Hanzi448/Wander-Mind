@@ -1,4 +1,6 @@
+"use client";
 import React, { useState, useEffect } from 'react';
+import dynamic from "next/dynamic";
 import { useRouter } from 'next/router';
 import Link from 'next/link';
 import {
@@ -18,12 +20,17 @@ import {
 
 import Layout from '@/components/layout/Layout';
 import Button from '@/components/ui/Button';
-import DestinationMap from '@/components/destinations/DestinationMap';
+// import DestinationMap from '@/components/destinations/DestinationMap';
 import { LoadingSpinner } from '@/components/ui/Loading';
 import { useAuthStore } from '@/services/auth';
 import { destinationService, useFavorites } from '@/services/destinations';
 import { Destination } from '@/utils/types';
 import { clsx } from 'clsx';
+
+const DestinationMap = dynamic(
+  () => import("@/components/destinations/DestinationMap"),
+  { ssr: false }
+);
 
 
 export async function getServerSideProps(context: any) {
