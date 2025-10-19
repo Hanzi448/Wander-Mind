@@ -595,11 +595,11 @@ SOFTWARE.
 
 <div align="center">
 
-### **Star this repository if you find it helpful!** 🌟
+### **Star this repository if you find it helpful!**
 
 **Built with ❤️ for travelers worldwide**
 
-[🌐 Live Demo](https://wander-mind-git-main-hanzalas-projects-632fb6fe.vercel.app/) • [🔌 API](https://wander-mind.onrender.com) • [📖 Documentation](https://github.com/Hanzi448/Wander-Mind/wiki) • [🐛 Report Bug](https://github.com/Hanzi448/Wander-Mind/issues)
+[ Live Demo](https://wander-mind-git-main-hanzalas-projects-632fb6fe.vercel.app/) • [ API](https://wander-mind.onrender.com) • [ Documentation](https://github.com/Hanzi448/Wander-Mind/wiki) • [ Report Bug](https://github.com/Hanzi448/Wander-Mind/issues)
 
 **Happy Traveling!**
 
