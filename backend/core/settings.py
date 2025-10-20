@@ -132,3 +132,22 @@ CSRF_TRUSTED_ORIGINS = [
     "https://*.onrender.com",
     "https://*.vercel.app",
 ]
+
+# Auto-create superuser on Render (only if it doesn't exist)
+from django.contrib.auth import get_user_model
+import os
+
+try:
+    User = get_user_model()
+    username = os.getenv("DJANGO_SUPERUSER_USERNAME")
+    email = os.getenv("DJANGO_SUPERUSER_EMAIL")
+    password = os.getenv("DJANGO_SUPERUSER_PASSWORD")
+
+    if username and password:
+        if not User.objects.filter(username=username).exists():
+            user = User.objects.create_superuser(username=username, email=email, password=password)
+            print(f"Created superuser: {username}")
+        else:
+            print(f"Superuser '{username}' already exists.")
+except Exception as e:
+    print(f"Could not auto-create superuser: {e}")
