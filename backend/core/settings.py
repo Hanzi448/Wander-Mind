@@ -133,21 +133,26 @@ CSRF_TRUSTED_ORIGINS = [
     "https://*.vercel.app",
 ]
 
-# Auto-create superuser on Render (only if it doesn't exist)
+# --- Auto create superuser after migrations on Render ---
+from django.db.models.signals import post_migrate
+from django.dispatch import receiver
 from django.contrib.auth import get_user_model
 import os
 
-try:
+@receiver(post_migrate)
+def create_superuser_after_migrate(sender, **kwargs):
     User = get_user_model()
     username = os.getenv("DJANGO_SUPERUSER_USERNAME")
     email = os.getenv("DJANGO_SUPERUSER_EMAIL")
     password = os.getenv("DJANGO_SUPERUSER_PASSWORD")
 
-    if username and password:
-        if not User.objects.filter(username=username).exists():
-            user = User.objects.create_superuser(username=username, email=email, password=password)
-            print(f"Created superuser: {username}")
-        else:
-            print(f"Superuser '{username}' already exists.")
-except Exception as e:
-    print(f"Could not auto-create superuser: {e}")
+    if not username or not password:
+        print("⚠️ No superuser credentials in environment variables.")
+        return
+
+    if not User.objects.filter(username=username).exists():
+        User.objects.create_superuser(username=username, email=email, password=password)
+        print(f"✅ Superuser '{username}' created successfully.")
+    else:
+        print(f"ℹ️ Superuser '{username}' already exists.")
+
