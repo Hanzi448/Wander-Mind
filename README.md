@@ -2,7 +2,7 @@
 
 > A modern, full-stack travel planning application that helps you plan perfect trips with AI-powered itineraries, discover amazing destinations, and manage all your travel experiences in one place.
 
-[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://wander-mind-git-main-hanzalas-projects-632fb6fe.vercel.app/)
+[![Live Demo](https://img.shields.io/badge/demo-live-success)](https://wander-mind-taupe.vercel.app/)
 [![Backend API](https://img.shields.io/badge/API-live-blue)](https://wander-mind.onrender.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Made with Next.js](https://img.shields.io/badge/Next.js-14.0-black)](https://nextjs.org/)
@@ -12,8 +12,9 @@
 
 ## Live Deployment
 
-- **Frontend**: [https://wander-mind-git-main-hanzalas-projects-632fb6fe.vercel.app/](https://wander-mind-git-main-hanzalas-projects-632fb6fe.vercel.app/)
+- **Frontend**: [https://wander-mind-taupe.vercel.app/](https://wander-mind-taupe.vercel.app/)
 - **Backend API**: [https://wander-mind.onrender.com](https://wander-mind.onrender.com)
+- **Demo Account**: Email: demo@example.com, Password: Demo@123
 
 ---
 
