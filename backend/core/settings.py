@@ -121,15 +121,20 @@ MEDIA_ROOT = BASE_DIR / "media"
 # DEPLOYMENT: Use WhiteNoise for static file compression & caching
 STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-CORS_ALLOW_ALL_ORIGINS = True  #OK for demo/showcase project
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = env("CORS_ALLOWED_ORIGINS", default="http://localhost:3000,http://127.0.0.1:3000,https://wander-mind-taupe.vercel.app").split(",")
 
-# Optional: allow credentials if needed
+# Required for HttpOnly cookies
 CORS_ALLOW_CREDENTIALS = True
+
+# Security Settings for Production
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_BROWSER_XSS_FILTER = True
 
 # DEPLOYMENT: settings for when behind a proxy (e.g. Render)
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-CSRF_TRUSTED_ORIGINS = [
-    "https://*.onrender.com",
-    "https://*.vercel.app",
-]
+CSRF_TRUSTED_ORIGINS = CORS_ALLOWED_ORIGINS
 

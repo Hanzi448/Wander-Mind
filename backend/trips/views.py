@@ -6,7 +6,10 @@ from datetime import date
 from google import genai
 from google.genai.types import Content, Part
 import json
+import logging
 from core.services.weather import get_trip_forecast, WeatherError
+
+logger = logging.getLogger(__name__)
 
 from .models import Trip
 from .serializers import TripSerializer
@@ -44,8 +47,7 @@ class TripViewSet(viewsets.ModelViewSet):
                     trip.weather_snapshot = weather
                     trip.save(update_fields=["weather_snapshot"])
                 except Exception as e:
-                    print(f"Weather fetch failed: {e}")
-                    pass
+                    logger.warning(f"Weather fetch failed during trip creation: {e}")
 
     @action(detail=True, methods=["post"])
     def generate_itinerary(self, request, pk=None):
@@ -90,9 +92,20 @@ class TripViewSet(viewsets.ModelViewSet):
 
             text_response = response.text
 
+            # Clean markdown JSON block usually returned by Gemini
+            cleaned_text = text_response.strip()
+            if cleaned_text.startswith("```json"):
+                cleaned_text = cleaned_text[7:]
+            elif cleaned_text.startswith("```"):
+                cleaned_text = cleaned_text[3:]
+            if cleaned_text.endswith("```"):
+                cleaned_text = cleaned_text[:-3]
+            cleaned_text = cleaned_text.strip()
+
             try:
-                itinerary_json = json.loads(text_response)
-            except Exception:
+                itinerary_json = json.loads(cleaned_text)
+            except Exception as e:
+                logger.error(f"Failed to parse Gemini output: {e}\nRaw output: {text_response}")
                 itinerary_json = {"raw_text": text_response}
 
             trip.itinerary = itinerary_json
@@ -104,7 +117,8 @@ class TripViewSet(viewsets.ModelViewSet):
             )
 
         except Exception as e:
-            return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            logger.exception("AI generation failed or connection timeout")
+            return Response({"error": "AI service temporarily unavailable. Please try again later."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
     
     # Weather API integration
     @action(detail=True, methods=["get"])

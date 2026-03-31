@@ -13,6 +13,7 @@ import { API_BASE_URL, API_ENDPOINTS, STORAGE_KEYS } from '@/utils/constants';
 // Axios instance with default config
 const api = axios.create({
   baseURL: API_BASE_URL,
+  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -23,7 +24,6 @@ interface AuthStore {
   user: User | null;
   profile: Profile | null;
   accessToken: string | null;
-  refreshToken: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
 
@@ -34,7 +34,7 @@ interface AuthStore {
   refreshAccessToken: () => Promise<boolean>;
   fetchProfile: () => Promise<void>;
   updateProfile: (profileData: Partial<Profile>) => Promise<void>;
-  setTokens: (access: string, refresh: string) => void;
+  setTokens: (access: string) => void;
   clearAuth: () => void;
 }
 
@@ -45,7 +45,6 @@ export const useAuthStore = create<AuthStore>()(
       user: null,
       profile: null,
       accessToken: null,
-      refreshToken: null,
       isAuthenticated: false,
       isLoading: false,
 
@@ -58,12 +57,11 @@ export const useAuthStore = create<AuthStore>()(
             credentials
           );
 
-          const { access, refresh, user } = response.data;
+          const { access, user } = response.data;
 
           set({
             user,
             accessToken: access,
-            refreshToken: refresh,
             isAuthenticated: true,
             isLoading: false,
           });
@@ -74,13 +72,16 @@ export const useAuthStore = create<AuthStore>()(
           // Fetch user profile
           await get().fetchProfile();
 
-        } catch (error: any) {
+        } catch (error: unknown) {
           set({ isLoading: false });
-          throw new Error(
-            error.response?.data?.message ||
-            error.response?.data?.detail ||
-            'Login failed'
-          );
+          if (axios.isAxiosError(error) && error.response) {
+            throw new Error(
+              error.response?.data?.message ||
+              error.response?.data?.detail ||
+              'Login failed'
+            );
+          }
+          throw new Error('Login failed due to network error');
         }
       },
 
@@ -130,16 +131,7 @@ export const useAuthStore = create<AuthStore>()(
 
       refreshAccessToken: async (): Promise<boolean> => {
         try {
-          const { refreshToken } = get();
-
-          if (!refreshToken) {
-            get().clearAuth();
-            return false;
-          }
-
-          const response = await api.post(API_ENDPOINTS.REFRESH, {
-            refresh: refreshToken,
-          });
+          const response = await api.post(API_ENDPOINTS.REFRESH);
 
           const { access } = response.data;
 
@@ -177,8 +169,8 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
-      setTokens: (access: string, refresh: string) => {
-        set({ accessToken: access, refreshToken: refresh });
+      setTokens: (access: string) => {
+        set({ accessToken: access });
         api.defaults.headers.common['Authorization'] = `Bearer ${access}`;
       },
 
@@ -187,7 +179,6 @@ export const useAuthStore = create<AuthStore>()(
           user: null,
           profile: null,
           accessToken: null,
-          refreshToken: null,
           isAuthenticated: false,
           isLoading: false,
         });
@@ -208,7 +199,6 @@ export const useAuthStore = create<AuthStore>()(
         user: state.user,
         profile: state.profile,
         accessToken: state.accessToken,
-        refreshToken: state.refreshToken,
         isAuthenticated: state.isAuthenticated,
       }),
     }
@@ -288,13 +278,13 @@ export const authHelpers = {
   },
 
   initializeAuth: () => {
-    const { accessToken, refreshToken, isAuthenticated } = useAuthStore.getState();
+    const { accessToken, isAuthenticated } = useAuthStore.getState();
 
     if (isAuthenticated && accessToken) {
       api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
 
       // Check if token is expired and refresh if needed
-      if (authHelpers.isTokenExpired(accessToken) && refreshToken) {
+      if (authHelpers.isTokenExpired(accessToken)) {
         useAuthStore.getState().refreshAccessToken();
       }
     }
