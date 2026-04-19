@@ -85,7 +85,7 @@ const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
       const authResponse = await googleAuthService.handleGoogleAuth(response.credential);
       
       // Store tokens
-      setTokens(authResponse.access, authResponse.refresh);
+      setTokens(authResponse.access);
       
       // Fetch user profile
       await fetchProfile();
