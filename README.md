@@ -10,7 +10,7 @@
 
 ---
 
-## Live Deployment
+## Live Deployment (Deployment is paused temoporarily)
 
 - **Frontend**: [https://wander-mind-taupe.vercel.app/](https://wander-mind-taupe.vercel.app/)
 - **Backend API**: [https://wander-mind.onrender.com](https://wander-mind.onrender.com)
